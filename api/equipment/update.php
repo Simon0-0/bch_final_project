@@ -3,13 +3,28 @@ header("Access-Control-Allow-Origin: *");
 header("Content-Type: application/json; charset=UTF-8");
 
 include_once "../../config/database.php";
+include_once "../../config/auth.php";
+require_once "../../config/verify_token.php";
 
 $data = json_decode(file_get_contents("php://input"), true);
 
-if (!empty($data['equipment_id']) && (!empty($data['name']) || !empty($data['description']) || !empty($data['status']) || !empty($data['location']))) {
+// Verify token and fetch user data
+$user = verifyToken();
+
+if (!empty($data['equipment_id']) && 
+    (!empty($data['name']) || !empty($data['description']) || !empty($data['status']) || !empty($data['location']))) {
+
     $database = new Database();
     $db = $database->getConnection();
 
+    // Check if user has permission to update
+    if ($user->role_id > 2 && $user->employee_id !== $data['assigned_to']) {
+        http_response_code(403); // Forbidden
+        echo json_encode(["message" => "Access denied."]);
+        exit();
+    }
+
+    // Proceed with the update
     $query = "UPDATE Equipment SET ";
     $params = [];
 
@@ -43,14 +58,14 @@ if (!empty($data['equipment_id']) && (!empty($data['name']) || !empty($data['des
     }
 
     if ($stmt->execute()) {
-        http_response_code(200);
+        http_response_code(200); // OK
         echo json_encode(["message" => "Equipment updated successfully."]);
     } else {
-        http_response_code(500);
+        http_response_code(500); // Internal Server Error
         echo json_encode(["message" => "Failed to update equipment."]);
     }
 } else {
-    http_response_code(400);
+    http_response_code(400); // Bad Request
     echo json_encode(["message" => "Incomplete or invalid data."]);
 }
 ?>

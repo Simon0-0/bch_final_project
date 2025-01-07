@@ -7,7 +7,7 @@ include_once "../../config/database.php";
 $database = new Database();
 $db = $database->getConnection();
 
-$query = "SELECT * FROM Equipment WHERE archived = 0";
+$query = "SELECT * FROM Equipment";
 $stmt = $db->prepare($query);
 $stmt->execute();
 
@@ -24,6 +24,7 @@ if ($num > 0) {
             "description" => $description,
             "status" => $status,
             "location" => $location,
+            "assigned_to" => $assigned_to,
             "created_at" => $created_at,
             "updated_at" => $updated_at
         ];

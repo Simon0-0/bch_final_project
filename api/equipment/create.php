@@ -3,8 +3,16 @@ header("Access-Control-Allow-Origin: *");
 header("Content-Type: application/json; charset=UTF-8");
 
 include_once "../../config/database.php";
+include_once "../../config/auth.php";
 
 $data = json_decode(file_get_contents("php://input"), true);
+
+// Check if the user has permission to create
+if (!checkUserPermissions($data['role_id'], 2)) {
+    http_response_code(403); // Forbidden
+    echo json_encode(["message" => "Access denied. Only managers and admins can create items."]);
+    exit();
+}
 
 if (!empty($data['name']) && !empty($data['description']) && !empty($data['status']) && !empty($data['location'])) {
     $database = new Database();
