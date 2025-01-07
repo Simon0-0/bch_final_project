@@ -4,6 +4,10 @@ header("Content-Type: application/json; charset=UTF-8");
 
 include_once "../../config/database.php";
 
+require_once "../../config/verify_token.php"; // Verify the token
+$user = verifyToken(); // Fetch user data from the token
+
+
 $database = new Database();
 $db = $database->getConnection();
 

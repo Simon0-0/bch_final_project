@@ -3,11 +3,15 @@ header("Access-Control-Allow-Origin: *");
 header("Content-Type: application/json; charset=UTF-8");
 
 include_once "../../config/database.php";
+require_once "../../config/verify_token.php"; // Include token verification
+
+// Verify token and fetch user data
+$user = verifyToken(); // Decoded user data from the token
 
 $database = new Database();
 $db = $database->getConnection();
 
-$query = "SELECT * FROM Equipment";
+$query = "SELECT * FROM Equipment WHERE archived = 0";
 $stmt = $db->prepare($query);
 $stmt->execute();
 
@@ -32,10 +36,10 @@ if ($num > 0) {
         array_push($equipment_arr, $equipment_item);
     }
 
-    http_response_code(200);
+    http_response_code(200); // OK
     echo json_encode(["message" => "Equipment retrieved successfully.", "data" => $equipment_arr]);
 } else {
-    http_response_code(404);
+    http_response_code(404); // Not Found
     echo json_encode(["message" => "No equipment found."]);
 }
 ?>

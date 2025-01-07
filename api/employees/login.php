@@ -37,12 +37,18 @@ if ($stmt->rowCount() == 0) {
 
 $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
-// Verify password
-if (!password_verify($password, $user['password_hash'])) {
-    http_response_code(401); // Unauthorized
-    echo json_encode(["message" => "Invalid email or password."]);
+if ($stmt->rowCount() == 0) {
+    http_response_code(401);
+    echo json_encode(["message" => "Email not found in the database."]);
     exit();
 }
+
+if (!password_verify($password, $user['password_hash'])) {
+    http_response_code(401);
+    echo json_encode(["message" => "Password mismatch."]);
+    exit();
+}
+
 
 // Generate JWT token
 $secret_key = "YOUR_SECRET_KEY";
@@ -62,6 +68,7 @@ $payload = [
         "role_id" => $user['role_id']
     ]
 ];
+
 
 $jwt = JWT::encode($payload, $secret_key, 'HS256');
 
