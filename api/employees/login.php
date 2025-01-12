@@ -1,6 +1,14 @@
 <?php
 header("Access-Control-Allow-Origin: *");
 header("Content-Type: application/json; charset=UTF-8");
+header("Access-Control-Allow-Headers: Content-Type, Authorization");
+header("Access-Control-Allow-Methods: POST, GET, OPTIONS");
+
+// Handle preflight requests
+if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+    http_response_code(200);
+    exit();
+}
 
 include_once "../../config/database.php";
 require '../../vendor/autoload.php'; // Include JWT library
@@ -37,21 +45,15 @@ if ($stmt->rowCount() == 0) {
 
 $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
-if ($stmt->rowCount() == 0) {
-    http_response_code(401);
-    echo json_encode(["message" => "Email not found in the database."]);
-    exit();
-}
-
+// Validate password
 if (!password_verify($password, $user['password_hash'])) {
-    http_response_code(401);
-    echo json_encode(["message" => "Password mismatch."]);
+    http_response_code(401); // Unauthorized
+    echo json_encode(["message" => "Invalid email or password."]);
     exit();
 }
-
 
 // Generate JWT token
-$secret_key = "YOUR_SECRET_KEY";
+$secret_key = getenv('JWT_SECRET_KEY') ?: "YOUR_SECRET_KEY";
 $issuer_claim = "localhost"; // Issuer
 $audience_claim = "localhost"; // Audience
 $issued_at = time();
@@ -68,7 +70,6 @@ $payload = [
         "role_id" => $user['role_id']
     ]
 ];
-
 
 $jwt = JWT::encode($payload, $secret_key, 'HS256');
 
