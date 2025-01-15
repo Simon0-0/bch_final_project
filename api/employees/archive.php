@@ -1,6 +1,6 @@
 <?php
 // api/users/archive.php
-
+require_once '../../config/cors.php';
 include_once "../../config/database.php";
 
 // Get JSON input
