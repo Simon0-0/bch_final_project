@@ -1,5 +1,6 @@
 <?php
 require_once '../../config/cors.php';
+include_once "../../config/auth.php";
 
 include_once "../../config/database.php";
 
@@ -8,7 +9,11 @@ $user = verifyToken(); // Fetch user data from the token
 
 $database = new Database();
 $db = $database->getConnection();
-
+if ($user->role_id > 2 && $user->employee_id !== $data['assigned_to']) {
+    http_response_code(403); // Forbidden
+    echo json_encode(["message" => "Access denied."]);
+    exit();
+}
 
 $query = "SELECT * FROM Employees WHERE archived = 0";
 $stmt = $db->prepare($query);

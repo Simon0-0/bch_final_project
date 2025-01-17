@@ -2,6 +2,7 @@
 // api/users/archive.php
 require_once '../../config/cors.php';
 include_once "../../config/database.php";
+include_once "../../config/auth.php";
 
 // Get JSON input
 $data = json_decode(file_get_contents("php://input"), true);
@@ -9,6 +10,13 @@ $data = json_decode(file_get_contents("php://input"), true);
 if (!empty($data['employee_id'])) {
     $database = new Database();
     $db = $database->getConnection();
+
+    if ($user->role_id > 2 && $user->employee_id !== $data['assigned_to']) {
+        http_response_code(403); // Forbidden
+        echo json_encode(["message" => "Access denied."]);
+        exit();
+    }
+
 
     $query = "UPDATE Employees SET archived = 1 WHERE employee_id = :employee_id";
 
