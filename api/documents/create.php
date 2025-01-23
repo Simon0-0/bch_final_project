@@ -1,7 +1,8 @@
 <?php
-require_once '../../config/cors.php';
-include_once "../../config/database.php";
-include_once "../../config/auth.php";
+// Include necessary files for DB connection and authentication
+require_once '../../config/database.php';
+require_once '../../config/auth.php'; // Include authentication for user validation
+include '../../config/cors.php'; // Include CORS headers
 
 // Ensure request is POST
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
@@ -18,39 +19,33 @@ $data = json_decode($rawInput, true);
 error_log("Received Data: " . print_r($data, true));
 
 // Validate required fields
-if (!$data || empty($data['title']) || empty($data['content']) || empty($data['status'])) {
+if (!$data || empty($data['title']) || empty($data['content']) )  {
     http_response_code(400);
     echo json_encode(["error" => "Missing required fields: title, content, or status.", "received" => $data]);
     exit;
 }
 
-try {
-    // Connect to database
-    $database = new Database();
-    $db = $database->getConnection();
-    if ($user->role_id > 2 && $user->employee_id !== $data['assigned_to']) {
-        http_response_code(403); // Forbidden
-        echo json_encode(["message" => "Access denied."]);
-        exit();
-    }
 
-    // Insert query
-    $query = "INSERT INTO Documents (title, content, status, created_at) VALUES (:title, :content, :status, NOW())";
-    $stmt = $db->prepare($query);
-    $stmt->bindParam(':title', $data['title']);
-    $stmt->bindParam(':content', $data['content']);
-    $stmt->bindParam(':status', $data['status']);
+// Create a new database connection
+$database = new Database();
+$db = $database->getConnection();
 
-    // Execute query
-    if ($stmt->execute()) {
-        http_response_code(201);
-        echo json_encode(["message" => "Document created successfully."]);
-    } else {
-        http_response_code(500);
-        echo json_encode(["error" => "Database error: Unable to create document."]);
-    }
-} catch (PDOException $e) {
-    http_response_code(500);
-    echo json_encode(["error" => "Database error: " . $e->getMessage()]);
+// Prepare the query to insert a new document
+$query = "INSERT INTO Documents (title, content, created_by, created_at, updated_at)
+          VALUES (:title, :content, :created_by, NOW(), NOW())";
+
+// Prepare the statement
+$stmt = $db->prepare($query);
+
+// Bind parameters
+$stmt->bindParam(':title', $data['title']);
+$stmt->bindParam(':content', $data['content']);
+$stmt->bindParam(':created_by', $user['user_id']); // Use the authenticated user ID
+
+// Execute the query
+if ($stmt->execute()) {
+    echo json_encode(["message" => "Document created successfully"]);
+} else {
+    echo json_encode(["error" => "Failed to create document"]);
 }
 ?>

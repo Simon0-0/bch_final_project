@@ -5,11 +5,10 @@ include_once "../../config/database.php";
 require_once "../../config/verify_token.php"; // Verify the token
 $user = verifyToken(); // Fetch user data from the token
 
-
 $database = new Database();
 $db = $database->getConnection();
 
-$query = "SELECT * FROM Suppliers WHERE archived = 0";
+$query = "SELECT supplier_id, name, contact_name, phone_number, email, image_url, created_at, updated_at FROM Suppliers WHERE archived = 0";
 $stmt = $db->prepare($query);
 $stmt->execute();
 
@@ -26,6 +25,7 @@ if ($num > 0) {
             "contact_name" => $contact_name,
             "phone_number" => $phone_number,
             "email" => $email,
+            "image_url" => $image_url, // Only store the image URL
             "created_at" => $created_at,
             "updated_at" => $updated_at
         ];

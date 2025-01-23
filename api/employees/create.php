@@ -3,52 +3,52 @@ require_once '../../config/cors.php';
 include_once "../../config/database.php";
 include_once "../../config/auth.php";
 
+$database = new Database();
+$db = $database->getConnection();
+
+// Check user authentication
+require_once "../../config/verify_token.php"; 
+$user = verifyToken(); 
+
+// Decode JSON input
 $data = json_decode(file_get_contents("php://input"), true);
 
-// Validate JSON payload
-if (!$data) {
-    http_response_code(400);
-    echo json_encode(["message" => "Invalid JSON payload."]);
+// ✅ Debugging: Log received data
+error_log(print_r($data, true));
+
+if (!isset($user->role_id) || $user->role_id > 1) { 
+    http_response_code(403);
+    echo json_encode(["message" => "Access denied. Only Admins can create employees."]);
     exit();
 }
 
-// Validate required fields
-if (empty($data['name']) || empty($data['email']) || empty($data['password']) || empty($data['role_id'])) {
+// ✅ Ensure all required fields are present
+if (empty($data['name']) || empty($data['email']) || empty($data['phone']) || empty($data['position']) || empty($data['role_id']) || empty($data['password'])) {
     http_response_code(400);
     echo json_encode(["message" => "Missing required fields."]);
     exit();
 }
 
-// Create a new database connection
-$database = new Database();
-$db = $database->getConnection();
+// ✅ Hash password securely
+$password_hash = password_hash($data['password'], PASSWORD_DEFAULT);
 
-if ($user->role_id > 2 && $user->employee_id !== $data['assigned_to']) {
-    http_response_code(403); // Forbidden
-    echo json_encode(["message" => "Access denied."]);
-    exit();
-}
+// ✅ Insert new employee
+$query = "INSERT INTO Employees (name, email, phone, position, role_id, password_hash) 
+          VALUES (:name, :email, :phone, :position, :role_id, :password_hash)";
 
-
-// Insert employee query
-$query = "INSERT INTO Employees (name, email, password_hash, position, role_id, archived) 
-          VALUES (:name, :email, :password_hash, :position, :role_id, :archived)";
 $stmt = $db->prepare($query);
-
-// Bind parameters
 $stmt->bindParam(':name', $data['name']);
 $stmt->bindParam(':email', $data['email']);
-$stmt->bindParam(':password_hash', password_hash($data['password'], PASSWORD_DEFAULT));
+$stmt->bindParam(':phone', $data['phone']);
 $stmt->bindParam(':position', $data['position']);
 $stmt->bindParam(':role_id', $data['role_id']);
-$stmt->bindValue(':archived', 0, PDO::PARAM_INT); // New employees are not archived
+$stmt->bindParam(':password_hash', $password_hash); // ✅ Hash password before storing
 
-// Execute query
 if ($stmt->execute()) {
-    http_response_code(201); // Created
+    http_response_code(201);
     echo json_encode(["message" => "Employee created successfully."]);
 } else {
-    http_response_code(500); // Internal Server Error
+    http_response_code(500);
     echo json_encode(["message" => "Failed to create employee."]);
 }
 ?>
