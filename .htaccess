@@ -1,0 +1,3 @@
+<FilesMatch "\.(php|json|xml)$">
+    Require all granted
+</FilesMatch>
