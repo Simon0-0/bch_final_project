@@ -10,29 +10,13 @@ $query = "SELECT * FROM Documents WHERE archived = 1";
 $stmt = $db->prepare($query);
 $stmt->execute();
 
-$num = $stmt->rowCount();
+$documents_arr = [];
 
-if ($num > 0) {
-    $documents_arr = [];
-    while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
-        extract($row);
-
-        $document_item = [
-            "document_id" => $document_id,
-            "title" => $title,
-            "content" => $content,
-            "created_by" => $created_by,
-            "created_at" => $created_at,
-            "updated_at" => $updated_at
-        ];
-
-        array_push($documents_arr, $document_item);
-    }
-
-    http_response_code(200);
-    echo json_encode(["message" => "Archived documents retrieved successfully.", "data" => $documents_arr]);
-} else {
-    http_response_code(404);
-    echo json_encode(["message" => "No archived documents found."]);
+while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+    $documents_arr[] = $row;
 }
+
+// Always return a valid JSON array
+http_response_code(200);
+echo json_encode($documents_arr);
 ?>

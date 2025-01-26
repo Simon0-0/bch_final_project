@@ -1,15 +1,15 @@
 <?php
 require_once '../../config/cors.php';
 include_once "../../config/database.php";
-
 require_once "../../config/verify_token.php"; // Verify the token
-$user = verifyToken(); // Fetch user data from the token
 
+$user = verifyToken(); // Fetch user data from the token
 
 $database = new Database();
 $db = $database->getConnection();
 
-$query = "SELECT * FROM Documents WHERE archived = 0";
+// ✅ Ensure `file_link` is included in the SELECT query
+$query = "SELECT document_id, title, content, created_by, file_link, created_at, updated_at FROM Documents WHERE archived = 0";
 $stmt = $db->prepare($query);
 $stmt->execute();
 
@@ -25,12 +25,14 @@ if ($num > 0) {
             "title" => $title,
             "content" => $content,
             "created_by" => $created_by,
+            "file_link" => $file_link, // ✅ Added file link
             "created_at" => $created_at,
             "updated_at" => $updated_at
         ];
 
         array_push($documents_arr, $document_item);
     }
+
     http_response_code(200);
     echo json_encode(["message" => "Documents retrieved successfully.", "data" => $documents_arr]);
 } else {

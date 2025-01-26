@@ -5,11 +5,13 @@ include_once "../../config/auth.php";
 
 $data = json_decode(file_get_contents("php://input"), true);
 
-if (!empty($data['document_id']) && (!empty($data['title']) || !empty($data['content']))) {
+if (!empty($data['document_id']) && (!empty($data['title']) || !empty($data['content']) || isset($data['file_link']))) {
     $database = new Database();
     $db = $database->getConnection();
+
+    // ✅ Ensure user has permission to update
     if ($user->role_id > 2 && $user->employee_id !== $data['assigned_to']) {
-        http_response_code(403); // Forbidden
+        http_response_code(403);
         echo json_encode(["message" => "Access denied."]);
         exit();
     }
@@ -27,6 +29,11 @@ if (!empty($data['document_id']) && (!empty($data['title']) || !empty($data['con
         $params[':content'] = $data['content'];
     }
 
+    if (isset($data['file_link'])) { // ✅ Allow `file_link` to be updated
+        $query .= "file_link = :file_link, ";
+        $params[':file_link'] = $data['file_link'];
+    }
+
     $query = rtrim($query, ", ") . " WHERE document_id = :document_id";
     $params[':document_id'] = $data['document_id'];
 
@@ -38,7 +45,7 @@ if (!empty($data['document_id']) && (!empty($data['title']) || !empty($data['con
 
     if ($stmt->execute()) {
         http_response_code(200);
-        echo json_encode(["message" => "Document updated successfully."]);
+        echo json_encode(["message" => "Document updated successfully.", "file_link" => $data['file_link']]);
     } else {
         http_response_code(500);
         echo json_encode(["message" => "Failed to update document."]);

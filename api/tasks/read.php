@@ -1,15 +1,18 @@
 <?php
 require_once '../../config/cors.php';
 include_once "../../config/database.php";
-
 require_once "../../config/verify_token.php"; // Verify the token
-$user = verifyToken(); // Fetch user data from the token
 
+$user = verifyToken(); // Fetch user data from the token
 
 $database = new Database();
 $db = $database->getConnection();
 
-$query = "SELECT * FROM Tasks WHERE archived = 0";
+// ✅ Ensure `assigned_to` is included in the SELECT query
+$query = "SELECT task_id, title, description, status, priority, assigned_to, due_date, created_at, updated_at 
+          FROM Tasks 
+          WHERE archived = 0";
+
 $stmt = $db->prepare($query);
 $stmt->execute();
 
@@ -26,6 +29,7 @@ if ($num > 0) {
             "description" => $description,
             "status" => $status,
             "priority" => $priority,
+            "assigned_to" => $assigned_to, 
             "due_date" => $due_date,
             "created_at" => $created_at,
             "updated_at" => $updated_at

@@ -1,0 +1,13 @@
+Array
+(
+    [image] => Array
+        (
+            [name] => IMG_20210216_112410.jpg
+            [full_path] => IMG_20210216_112410.jpg
+            [type] => image/jpeg
+            [tmp_name] => C:\Users\Admin\AppData\Local\Temp\phpE6D.tmp
+            [error] => 0
+            [size] => 3515069
+        )
+
+)
