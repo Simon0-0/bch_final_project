@@ -1,34 +1,51 @@
 <?php
-require_once '../../config/cors.php';
-include_once "../../config/database.php";
+header("Access-Control-Allow-Origin: *");
 
-header('Content-Type: application/json'); // ✅ Ensure JSON output
+header("Access-Control-Allow-Methods: POST, OPTIONS");
 
-$database = new Database();
-$db = $database->getConnection();
+header("Access-Control-Allow-Headers: Content-Type, Authorization");
 
-// ✅ Capture JSON input
-$data = json_decode(file_get_contents("php://input"), true);
-$document_id = $data['document_id'] ?? null;
-
-// ✅ Debug log
-file_put_contents("debug_document_archive.txt", print_r($data, true));
-
-if (!$document_id) {
-    http_response_code(400);
-    echo json_encode(["message" => "Document ID is required."]);
+if ($_SERVER['REQUEST_METHOD'] == 'OPTIONS') {
+    http_response_code(200);
     exit();
 }
 
-// ✅ Update Query to Archive Document
-$query = "UPDATE Documents SET archived = 1 WHERE document_id = :document_id";
-$stmt = $db->prepare($query);
-$stmt->bindParam(":document_id", $document_id);
+ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
+error_reporting(E_ALL);
+
+$data = json_decode(file_get_contents("php://input"), true);
+
+if (!isset($data['document_id'])) {
+    http_response_code(400);
+    echo json_encode(["error" => "Missing document_id"]);
+    exit();
+}
+
+$database_host = "localhost";
+$database_user = "root";
+$database_pass = "root"; // Change if necessary
+$database_name = "bch_final_project";
+
+$conn = new mysqli($database_host, $database_user, $database_pass, $database_name);
+
+if ($conn->connect_error) {
+    file_put_contents("debug.log", "DB Connection Failed: " . $conn->connect_error . "\n", FILE_APPEND);
+    die(json_encode(["error" => "Database connection failed: " . $conn->connect_error]));
+}
+$document_id = $data['document_id'];
+$sql = "UPDATE documents SET archived = 1 WHERE document_id = ?";
+$stmt = $conn->prepare($sql);
+$stmt->bind_param("i", $document_id);
 
 if ($stmt->execute()) {
-    echo json_encode(["message" => "Document archived successfully."]);
+    file_put_contents("debug.log", "Document $document_id archived successfully.\n", FILE_APPEND);
+    echo json_encode(["message" => "Document archived successfully"]);
 } else {
-    http_response_code(500);
-    echo json_encode(["message" => "Failed to archive document."]);
+    file_put_contents("debug.log", "SQL Error: " . $stmt->error . "\n", FILE_APPEND);
+    echo json_encode(["error" => "Failed to archive document"]);
 }
+
+$stmt->close();
+$conn->close();
 ?>

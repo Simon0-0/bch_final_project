@@ -43,7 +43,7 @@ if (!password_verify($password, $user['password_hash'])) {
 }
 
 // Generate JWT token
-$secret_key = getenv('JWT_SECRET_KEY') ?: "YOUR_SECRET_KEY";
+$secret_key = getenv('JWT_SECRET_KEY') ?: "SimonaKocisova"; // Secret key
 $issuer_claim = "localhost"; // Issuer
 $audience_claim = "localhost"; // Audience
 $issued_at = time();

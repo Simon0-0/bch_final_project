@@ -24,7 +24,7 @@ function verifyToken() {
     }
 
     $jwt = $arr[1];
-    $secret_key = "YOUR_SECRET_KEY";
+    $secret_key = "SimonaKocisova";
 
     try {
         $decoded = JWT::decode($jwt, new Key($secret_key, 'HS256'));

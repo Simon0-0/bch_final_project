@@ -1,4 +1,0 @@
-Array
-(
-    [document_id] => 5
-)
